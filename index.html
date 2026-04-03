@@ -1685,6 +1685,17 @@ function generateRandom(factors, config) {
 /* ============================================================
    MASTER GENERATE FUNCTION
    ============================================================ */
+function clearResults() {
+  state.matrix = [];
+  state.centerPointRows = new Set();
+  state._factorNames = null;
+  document.getElementById('summaryCard').style.display = 'none';
+  document.getElementById('tableToolbar').style.display = 'none';
+  document.getElementById('tableContainer').style.display = 'none';
+  document.getElementById('pagination').style.display = 'none';
+  document.getElementById('emptyState').style.display = '';
+}
+
 function generateDesign() {
   const factors = state.factors.filter(f => {
     if (f.type === 'categorical') return (f.categories || []).length >= 2;
@@ -1692,6 +1703,7 @@ function generateDesign() {
   });
 
   if (factors.length < 1) {
+    clearResults();
     showToast('Please add at least one valid factor.', 'error');
     return;
   }
@@ -1703,6 +1715,7 @@ function generateDesign() {
       break;
     case 'fractional-factorial':
       if (factors.length < 3) {
+        clearResults();
         showToast('Fractional factorial requires at least 3 factors.', 'error');
         return;
       }
@@ -1710,6 +1723,7 @@ function generateDesign() {
       break;
     case 'plackett-burman':
       if (factors.length < 2) {
+        clearResults();
         showToast('Plackett-Burman requires at least 2 factors.', 'error');
         return;
       }
@@ -1731,11 +1745,13 @@ function generateDesign() {
       result = generateRandom(factors, state.config);
       break;
     default:
+      clearResults();
       showToast('Unknown DOE type.', 'error');
       return;
   }
 
   if (result.error) {
+    clearResults();
     showToast(result.error, 'error');
     return;
   }
