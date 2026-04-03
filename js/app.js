@@ -27,14 +27,30 @@ const state = {
    DOE TYPE DEFINITIONS
    ============================================================ */
 const DOE_TYPES = [
-  { id: 'full-factorial', name: 'Full Factorial', desc: 'All factor combinations', info: 'Tests every possible combination of factor levels. Best for understanding all main effects and interactions when the number of factors and levels is small.' },
-  { id: 'fractional-factorial', name: 'Fractional Factorial', desc: 'Subset of combinations', info: 'Uses a carefully chosen fraction of the full factorial design. Efficient for screening many factors when some higher-order interactions can be assumed negligible.' },
-  { id: 'plackett-burman', name: 'Plackett-Burman', desc: 'Screening design', info: 'Highly efficient screening design for identifying the most important factors. Uses N runs (multiple of 4) to study up to N-1 factors, but cannot estimate interactions.' },
-  { id: 'box-behnken', name: 'Box-Behnken', desc: 'Response surface (3-level)', info: 'A 3-level response surface design that avoids extreme corners. Requires 3–7 factors, all at 3 levels. Does not include runs where all factors are at their extremes simultaneously.' },
-  { id: 'central-composite', name: 'Central Composite', desc: 'Response surface + star', info: 'Combines a factorial design with axial (star) points and center points for fitting second-order response surfaces. Three variants control the position of star points.' },
-  { id: 'latin-hypercube', name: 'Latin Hypercube', desc: 'Space-filling sample', info: 'Stratified random sampling that ensures each factor range is evenly covered. Excellent for computer experiments and exploring high-dimensional spaces efficiently.' },
-  { id: 'halton', name: 'Halton Sequence', desc: 'Quasi-random sequence', info: 'Low-discrepancy quasi-random sequence that fills the design space more uniformly than pure random sampling. Uses prime number bases for each factor dimension.' },
-  { id: 'random', name: 'Random Matrix', desc: 'Uniform random sampling', info: 'Generates random samples uniformly distributed within factor ranges. Simple and flexible, useful when no structured design is needed or for Monte Carlo studies.' },
+  { id: 'full-factorial', name: 'Full Factorial', desc: 'All factor combinations',
+    info: 'Tests every possible combination of factor levels. Best for understanding all main effects and interactions when the number of factors and levels is small.',
+    usage: 'When to use: You have 2–5 factors with 2–3 levels each and need to estimate all main effects and interactions. Example: Testing how baking temperature (150/200°C) and time (30/60 min) affect cake quality — runs every combination.' },
+  { id: 'fractional-factorial', name: 'Fractional Factorial', desc: 'Subset of combinations',
+    info: 'Uses a carefully chosen fraction of the full factorial design. Efficient for screening many factors when some higher-order interactions can be assumed negligible.',
+    usage: 'When to use: You have 4+ factors and a full factorial would require too many runs. Sacrifices higher-order interaction estimates for efficiency. Example: Screening 7 manufacturing parameters in 16 runs instead of 128.' },
+  { id: 'plackett-burman', name: 'Plackett-Burman', desc: 'Screening design',
+    info: 'Highly efficient screening design for identifying the most important factors. Uses N runs (multiple of 4) to study up to N-1 factors, but cannot estimate interactions.',
+    usage: 'When to use: Early-stage screening with many factors (5–20+) to identify which ones matter most. Only estimates main effects, not interactions. Example: Screening 11 ingredients in a drug formulation using just 12 runs.' },
+  { id: 'box-behnken', name: 'Box-Behnken', desc: 'Response surface (3-level)',
+    info: 'A 3-level response surface design that avoids extreme corners. Requires 3–7 factors, all at 3 levels. Does not include runs where all factors are at their extremes simultaneously.',
+    usage: 'When to use: Fitting a quadratic model when corner points are impractical or dangerous. All factors must be numeric with 3 levels. Example: Optimizing a chemical reaction where running all factors at extreme values simultaneously could be hazardous.' },
+  { id: 'central-composite', name: 'Central Composite', desc: 'Response surface + star',
+    info: 'Combines a factorial design with axial (star) points and center points for fitting second-order response surfaces. Three variants control the position of star points.',
+    usage: 'When to use: Building a full quadratic response surface model. Choose Circumscribed if factors can go beyond ±1 range, Face-Centered if they cannot, or Inscribed to keep all points within bounds. Example: Optimizing enzyme activity as a function of pH, temperature, and substrate concentration.' },
+  { id: 'latin-hypercube', name: 'Latin Hypercube', desc: 'Space-filling sample',
+    info: 'Stratified random sampling that ensures each factor range is evenly covered. Excellent for computer experiments and exploring high-dimensional spaces efficiently.',
+    usage: 'When to use: Computer simulations or high-dimensional exploration (5+ factors) where you need good coverage with a fixed budget of runs. Each factor range is divided into equal strata. Example: Sampling 50 configurations for a CFD simulation with 8 input parameters.' },
+  { id: 'halton', name: 'Halton Sequence', desc: 'Quasi-random sequence',
+    info: 'Low-discrepancy quasi-random sequence that fills the design space more uniformly than pure random sampling. Uses prime number bases for each factor dimension.',
+    usage: 'When to use: Similar to Latin Hypercube but deterministic — same inputs always produce the same design. Good for numerical integration and space-filling studies. Example: Sampling input space for a Monte Carlo risk analysis with reproducible results.' },
+  { id: 'random', name: 'Random Matrix', desc: 'Uniform random sampling',
+    info: 'Generates random samples uniformly distributed within factor ranges. Simple and flexible, useful when no structured design is needed or for Monte Carlo studies.',
+    usage: 'When to use: Quick exploratory analysis, Monte Carlo simulation, or when no structured design fits. Easy to increase sample size incrementally. Example: Generating 1000 random parameter sets for a sensitivity analysis or simulation warm-up.' },
 ];
 
 /* ============================================================
@@ -42,50 +58,101 @@ const DOE_TYPES = [
    ============================================================ */
 const PRESETS = [
   {
-    name: '2-Factor Full Factorial',
-    detail: '2 factors × 2 levels = 4 runs',
+    name: 'Baking Experiment',
+    detail: 'Full Factorial · 2 factors × 2 levels',
     doeType: 'full-factorial',
     factors: [
-      { name: 'Temperature', type: 'numeric', min: 50, max: 100, levels: 2 },
-      { name: 'Pressure', type: 'numeric', min: 1, max: 5, levels: 2 },
+      { name: 'Temp (°C)', type: 'numeric', min: 150, max: 200, levels: 2 },
+      { name: 'Time (min)', type: 'numeric', min: 30, max: 60, levels: 2 },
     ],
     config: {}
   },
   {
-    name: '3-Factor Box-Behnken',
-    detail: '3 factors, 3 levels, 15 runs',
+    name: 'Manufacturing Screen',
+    detail: 'Fractional Factorial · 5 factors, 16 runs',
+    doeType: 'fractional-factorial',
+    factors: [
+      { name: 'Speed (rpm)', type: 'numeric', min: 500, max: 2000, levels: 2 },
+      { name: 'Feed (mm/s)', type: 'numeric', min: 0.1, max: 1.0, levels: 2 },
+      { name: 'Depth (mm)', type: 'numeric', min: 0.5, max: 3.0, levels: 2 },
+      { name: 'Coolant (L/min)', type: 'numeric', min: 1, max: 5, levels: 2 },
+      { name: 'Tool Angle (°)', type: 'numeric', min: 5, max: 15, levels: 2 },
+    ],
+    config: { fraction: '1/2' }
+  },
+  {
+    name: 'Drug Formulation',
+    detail: 'Plackett-Burman · 7 factors, 8 runs',
+    doeType: 'plackett-burman',
+    factors: [
+      { name: 'Binder (%)', type: 'numeric', min: 1, max: 5, levels: 2 },
+      { name: 'Filler (%)', type: 'numeric', min: 10, max: 40, levels: 2 },
+      { name: 'Lubricant (%)', type: 'numeric', min: 0.5, max: 2, levels: 2 },
+      { name: 'Disintegrant (%)', type: 'numeric', min: 2, max: 8, levels: 2 },
+      { name: 'Granulation Time (min)', type: 'numeric', min: 5, max: 20, levels: 2 },
+      { name: 'Compression (kN)', type: 'numeric', min: 5, max: 15, levels: 2 },
+      { name: 'Drying Temp (°C)', type: 'numeric', min: 40, max: 60, levels: 2 },
+    ],
+    config: {}
+  },
+  {
+    name: 'CNC Machining',
+    detail: 'Box-Behnken · 3 factors, 3 levels',
     doeType: 'box-behnken',
     factors: [
-      { name: 'Speed', type: 'numeric', min: 100, max: 500, levels: 3 },
-      { name: 'Feed Rate', type: 'numeric', min: 0.1, max: 0.5, levels: 3 },
-      { name: 'Depth', type: 'numeric', min: 0.5, max: 2.5, levels: 3 },
+      { name: 'Speed (rpm)', type: 'numeric', min: 100, max: 500, levels: 3 },
+      { name: 'Feed Rate (mm/s)', type: 'numeric', min: 0.1, max: 0.5, levels: 3 },
+      { name: 'Cut Depth (mm)', type: 'numeric', min: 0.5, max: 2.5, levels: 3 },
     ],
     config: { centerPoints: 3 }
   },
   {
-    name: 'CCD Face-Centered',
-    detail: '3 factors, 20 runs',
+    name: 'Enzyme Optimization',
+    detail: 'CCD Face-Centered · 3 factors',
     doeType: 'central-composite',
     factors: [
       { name: 'pH', type: 'numeric', min: 4, max: 9, levels: 3 },
-      { name: 'Conc.', type: 'numeric', min: 10, max: 50, levels: 3 },
-      { name: 'Time', type: 'numeric', min: 5, max: 60, levels: 3 },
+      { name: 'Conc. (mg/L)', type: 'numeric', min: 10, max: 50, levels: 3 },
+      { name: 'Time (min)', type: 'numeric', min: 5, max: 60, levels: 3 },
     ],
     config: { centerPoints: 6 },
     ccdSubType: 'face-centered'
   },
   {
-    name: 'Latin Hypercube (5)',
-    detail: '5 factors, 20 samples',
+    name: 'CFD Simulation',
+    detail: 'Latin Hypercube · 5 factors, 30 samples',
     doeType: 'latin-hypercube',
     factors: [
-      { name: 'X1', type: 'numeric', min: 0, max: 100, levels: 2 },
-      { name: 'X2', type: 'numeric', min: 0, max: 100, levels: 2 },
-      { name: 'X3', type: 'numeric', min: 0, max: 100, levels: 2 },
-      { name: 'X4', type: 'numeric', min: 0, max: 100, levels: 2 },
-      { name: 'X5', type: 'numeric', min: 0, max: 100, levels: 2 },
+      { name: 'Inlet Velocity (m/s)', type: 'numeric', min: 0.5, max: 10, levels: 2 },
+      { name: 'Turbulence (%)', type: 'numeric', min: 1, max: 20, levels: 2 },
+      { name: 'Viscosity (Pa·s)', type: 'numeric', min: 0.001, max: 0.1, levels: 2 },
+      { name: 'Mesh Density', type: 'numeric', min: 100, max: 1000, levels: 2 },
+      { name: 'Temp (K)', type: 'numeric', min: 293, max: 373, levels: 2 },
     ],
-    config: { numSamples: 20, randomSeed: 42 }
+    config: { numSamples: 30, randomSeed: 42 }
+  },
+  {
+    name: 'Risk Analysis',
+    detail: 'Halton Sequence · 4 factors, 25 samples',
+    doeType: 'halton',
+    factors: [
+      { name: 'Market Growth (%)', type: 'numeric', min: -5, max: 15, levels: 2 },
+      { name: 'Interest Rate (%)', type: 'numeric', min: 2, max: 8, levels: 2 },
+      { name: 'Inflation (%)', type: 'numeric', min: 1, max: 6, levels: 2 },
+      { name: 'Exchange Rate', type: 'numeric', min: 0.8, max: 1.3, levels: 2 },
+    ],
+    config: { numSamples: 25 }
+  },
+  {
+    name: 'Material Sensitivity',
+    detail: 'Random · 3 factors, 50 samples',
+    doeType: 'random',
+    factors: [
+      { name: 'Yield Strength (MPa)', type: 'numeric', min: 200, max: 600, levels: 2 },
+      { name: 'Density (g/cm³)', type: 'numeric', min: 2.5, max: 8.0, levels: 2 },
+      { name: 'Elastic Modulus (GPa)', type: 'numeric', min: 50, max: 210, levels: 2 },
+    ],
+    config: { numSamples: 50, randomSeed: 123 }
   },
 ];
 
@@ -634,11 +701,43 @@ function selectDOEType(typeId, updateHash) {
   if (updateHash) {
     history.replaceState(null, '', '#' + typeId);
   }
+
+  // Auto-add factors to meet minimum requirements
+  const minFactors = getMinFactors(typeId);
+  let factorsAdded = false;
+  while (state.factors.length < minFactors) {
+    const idx = state.factors.length;
+    state.factors.push({
+      name: 'Factor ' + factorNameLetter(idx),
+      type: 'numeric',
+      min: 0,
+      max: 100,
+      levels: typeId === 'box-behnken' ? 3 : 2,
+    });
+    factorsAdded = true;
+  }
+
+  // For Box-Behnken, ensure all factors have 3 levels
+  if (typeId === 'box-behnken') {
+    state.factors.forEach(f => { if (f.type === 'numeric') f.levels = 3; });
+  }
+
+  if (factorsAdded) renderFactors();
   renderDOETypes();
   renderDOEInfo();
   renderConfigPanel();
   updateWarnings();
   generateDesign();
+}
+
+function getMinFactors(typeId) {
+  switch (typeId) {
+    case 'box-behnken': return 3;
+    case 'fractional-factorial': return 3;
+    case 'plackett-burman': return 2;
+    case 'central-composite': return 2;
+    default: return 1;
+  }
 }
 
 function applyHashRoute() {
@@ -668,8 +767,11 @@ function renderDOETypes() {
 }
 
 function renderDOEInfo() {
-  const info = DOE_TYPES.find(t => t.id === state.doeType);
-  document.getElementById('doeInfo').textContent = info ? info.info : '';
+  const dt = DOE_TYPES.find(t => t.id === state.doeType);
+  if (!dt) { document.getElementById('doeInfo').innerHTML = ''; return; }
+  document.getElementById('doeInfo').innerHTML =
+    `<strong>${dt.info}</strong>` +
+    (dt.usage ? `<br><br><span style="color:var(--text-tertiary);font-size:0.75rem;">${dt.usage}</span>` : '');
 }
 
 // Factor List
