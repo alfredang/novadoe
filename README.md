@@ -79,7 +79,11 @@ No frameworks. No backend. No dependencies. Just open `index.html` and start des
 
 ```
 novadoe/
-├── index.html          # Complete single-file application
+├── index.html           # HTML structure
+├── css/
+│   └── style.css        # Theme system, components, responsive layout
+├── js/
+│   └── app.js           # DOE algorithms, UI controllers, state management
 ├── screenshot.png       # App screenshot
 ├── README.md            # This file
 └── .github/
