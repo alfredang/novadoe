@@ -1786,6 +1786,28 @@ function generateDesign() {
    RENDER FUNCTIONS
    ============================================================ */
 
+/* ============================================================
+   HASH ROUTING
+   ============================================================ */
+function selectDOEType(typeId, updateHash) {
+  if (!DOE_TYPES.find(t => t.id === typeId)) return;
+  state.doeType = typeId;
+  if (updateHash) {
+    history.replaceState(null, '', '#' + typeId);
+  }
+  renderDOETypes();
+  renderDOEInfo();
+  renderConfigPanel();
+  updateWarnings();
+}
+
+function applyHashRoute() {
+  const hash = location.hash.replace('#', '');
+  if (hash && DOE_TYPES.find(t => t.id === hash)) {
+    selectDOEType(hash, false);
+  }
+}
+
 // DOE Type Grid
 function renderDOETypes() {
   const grid = document.getElementById('doeTypeGrid');
@@ -1798,11 +1820,7 @@ function renderDOETypes() {
 
   grid.querySelectorAll('.doe-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      state.doeType = btn.dataset.type;
-      renderDOETypes();
-      renderDOEInfo();
-      renderConfigPanel();
-      updateWarnings();
+      selectDOEType(btn.dataset.type, true);
     });
   });
 
@@ -2245,6 +2263,7 @@ function loadPreset(idx) {
   state.factors = JSON.parse(JSON.stringify(p.factors));
   if (p.ccdSubType) state.ccdSubType = p.ccdSubType;
   Object.assign(state.config, p.config);
+  history.replaceState(null, '', '#' + p.doeType);
   renderDOETypes();
   renderFactors();
   renderConfigPanel();
@@ -2410,6 +2429,10 @@ function init() {
   renderFactors();
   renderConfigPanel();
   renderPresets();
+
+  // Apply hash route (e.g., #box-behnken)
+  applyHashRoute();
+  window.addEventListener('hashchange', () => applyHashRoute());
 
   // Event bindings
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
